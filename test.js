@@ -138,6 +138,8 @@ const generateLabels = (step, min, max) => {
 const minInput = $('min');
 const maxInput = $('max');
 
+let prevChart;
+
 const generate = () => {
   try {
     const fn = namespace(func.value, 'math');
@@ -152,7 +154,11 @@ const generate = () => {
     const a = generateDataset(10, math, f, 'Custom Math', '#2ecc71', step, min, max);
     const b = generateDataset(4, Math, f, 'Built In Math', '#e74c3c', step, min, max);
     
-    new Chart(ctx, {
+    if (prevChart) {
+      prevChart.destroy();
+    }
+    
+    prevChart = new Chart(ctx, {
       type: 'line',
       
       data: {
