@@ -8,7 +8,7 @@ export const sin = (() =>
   {
     if (x < 0)
     {
-      return sin(-x);
+      return -sin(-x);
     }
     const z = x % PI;
     const k = z * (PI - z);
