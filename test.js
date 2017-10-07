@@ -55,7 +55,7 @@ input.addEventListener('input', () => {
     const a = eval(namespace(input.value, 'math'));
     const b = eval(namespace(input.value, 'Math'));
     
-    output3.innerHTML = ((1 - a / b) * 100).toFixed(16) + '%';
+    output3.innerHTML = ((a / b - 1) * 100).toFixed(16) + '%';
   } catch (e) {
     output3.innerHTML = 'error';
   }
@@ -170,10 +170,10 @@ const generate = (isRelative) => {
     const rf = new Function('math', 'Math', 'x', `
       const a = ${fn};
       const b = ${fn2};
-      return (1 - (a / (b === 0 ? 0 : b))) * 100
+      return ((a / (b === 0 ? 0 : b)) - 1) * 100
     `);
     
-    const re = generateDataset(4, rf, 'Relative Error', '#0f0', step, min, max, math, Math);
+    const re = generateDataset(4, rf, 'Relative Error %', '#0f0', step, min, max, math, Math);
     
     if (prevChart) {
       prevChart.destroy();
