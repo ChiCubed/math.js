@@ -6,6 +6,14 @@ export const sqrt = (() =>
   
   return n =>
   {
+    let m = 1;
+    
+    while (n > 10E32)
+    {
+      m *= 31622776601683790;
+      n /= 10E32;
+    }
+    
     const half = n * 0.5;
     
     fv[0] = n;
@@ -19,6 +27,6 @@ export const sqrt = (() =>
     y = y * (1.5 - (half * y * y));
     y = y * (1.5 - (half * y * y));
     
-    return 1 / y;
+    return m / y;
   };
 })();
