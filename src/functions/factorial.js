@@ -12,5 +12,5 @@ export const factorial = (() =>
     memo[i] = s;
   }
   
-  return x => x === floor(x) ? (memo[x] || Infinity) : gamma(x + 1);
+  return x => x === floor(x) && x >= 0 ? (memo[x] || Infinity) : gamma(x + 1);
 })();
