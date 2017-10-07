@@ -4,10 +4,11 @@ window.math = math;
 
 const namespace = (str, ns) => {
   ns = ns + '.';
-  let s = String(str), m, re = /[a-zA-Z]\w*/g, a = 0;
+  let s = String(str), m, re = /[a-zA-Z]\w*/g, a = 0, i;
   while ((m = re.exec(str)) !== null) {
-    if (m[0] === 'x') continue;
-    s = s.slice(0, m.index + a) + ns + s.slice(m.index + a);
+    i = m.index;
+    if (m[0] === 'x' || (i > 0 && /\d/.test(str.slice(i - 1, i)))) continue;
+    s = s.slice(0, i + a) + ns + s.slice(i + a);
     a += ns.length;
   }
   return s;
@@ -54,7 +55,7 @@ input.addEventListener('input', () => {
     const a = eval(namespace(input.value, 'math'));
     const b = eval(namespace(input.value, 'Math'));
     
-    output3.innerHTML = (1 - a / b).toFixed(16) + '%';
+    output3.innerHTML = ((1 - a / b) * 100).toFixed(16) + '%';
   } catch (e) {
     output3.innerHTML = 'error';
   }
@@ -62,6 +63,7 @@ input.addEventListener('input', () => {
 
 const calculatorSwitch = $('switch--calculator');
 const graphSwitch = $('switch--graph');
+const errorSwitch = $('switch--error');
 const form = $('form');
 const chart = $('chart');
 const gobtn = $('go');
@@ -72,6 +74,7 @@ show(chart);
 
 calculatorSwitch.addEventListener('click', () => {
   graphSwitch.classList.remove('active');
+  errorSwitch.classList.remove('active');
   calculatorSwitch.classList.add('active');
   hide(chart);
   show(form);
@@ -79,7 +82,16 @@ calculatorSwitch.addEventListener('click', () => {
 
 graphSwitch.addEventListener('click', () => {
   calculatorSwitch.classList.remove('active');
+  errorSwitch.classList.remove('active');
   graphSwitch.classList.add('active');
+  hide(form);
+  show(chart);
+});
+
+errorSwitch.addEventListener('click', () => {
+  calculatorSwitch.classList.remove('active');
+  graphSwitch.classList.remove('active');
+  errorSwitch.classList.add('active');
   hide(form);
   show(chart);
 });
@@ -89,7 +101,7 @@ gobtn.addEventListener('click', () => {
   graphSwitch.classList.remove('active');
   hide(form);
   hide(chart);
-  generate();
+  generate(errorSwitch.classList.contains('active'));
 });
 
 const canvas = document.getElementById('canvas');
@@ -103,7 +115,7 @@ resize();
 
 window.addEventListener('resize', resize);
 
-const generateDataset = (borderWidth, namespace, f, label, color, step, min, max) => {
+const generateDataset = (borderWidth, f, label, color, step, min, max, ...args) => {
   const data = {
     label: label,
     borderColor: color,
@@ -115,7 +127,7 @@ const generateDataset = (borderWidth, namespace, f, label, color, step, min, max
   
   try {
     for (let x = min; x < max; x += step) {
-      data.data.push(f(namespace, x));
+      data.data.push(f(...args, x));
     }
   } catch (e) {
     data.data = [];
@@ -140,7 +152,7 @@ const maxInput = $('max');
 
 let prevChart;
 
-const generate = () => {
+const generate = (isRelative) => {
   try {
     const fn = namespace(func.value, 'math');
     const f = new Function('math', 'x', `return (${fn})`);
@@ -151,8 +163,17 @@ const generate = () => {
     
     const labels = generateLabels(step, min, max);
     
-    const a = generateDataset(10, math, f, 'Custom Math', '#2ecc71', step, min, max);
-    const b = generateDataset(4, Math, f, 'Built In Math', '#e74c3c', step, min, max);
+    const a = generateDataset(10, f, 'Custom Math', '#2ecc71', step, min, max, math);
+    const b = generateDataset(4, f, 'Built In Math', '#e74c3c', step, min, max, Math);
+    
+    const fn2 = namespace(func.value, 'Math');
+    const rf = new Function('math', 'Math', 'x', `
+      const a = ${fn};
+      const b = ${fn2};
+      return (1 - (a / (b === 0 ? 0 : b))) * 100
+    `);
+    
+    const re = generateDataset(4, rf, 'Relative Error', '#0f0', step, min, max, math, Math);
     
     if (prevChart) {
       prevChart.destroy();
@@ -163,7 +184,7 @@ const generate = () => {
       
       data: {
         labels,
-        datasets: [b, a]
+        datasets: isRelative ? [re] : [b, a]
       },
       
       options: {
